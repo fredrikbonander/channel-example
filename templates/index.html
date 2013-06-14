@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html data-ng-app>
+<head>
+    <title></title>
+</head>
+<body>
+    <div data-ng-controller="ChannelController">
+        {{ message }}
+    </div>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+    <script src="/_ah/channel/jsapi"></script>
+    <script>
+        var user_id = parseInt(Math.random() * 100000, 10);
+    </script>
+    <script>
+        function ChannelController($scope, $http) {
+            $scope.message = 'hello!';
+
+            function openChannel() {
+                 $http.get('/channel', {
+                     params: {
+                         user_id: user_id
+                     }
+                }).success(function (channelData) {
+                    console.log('$http.get', arguments);
+                    $scope.channel = new goog.appengine.Channel(channelData.token);
+                    $scope.socket = $scope.channel.open();
+
+                    $scope.socket.onopen = function () {
+                        console.log('onopen', arguments);
+                        $http.post('/channel', {'user_id': user_id}).success(function () {
+                            console.log('$http.post', arguments);
+                        });
+                    };
+
+                    $scope.socket.onmessage = function (message) {
+                        console.log('onmessage', arguments);
+                        $scope.$apply(function () {
+                            $scope.message = message;
+                        });
+                    };
+
+                    $scope.socket.onerror = function () {
+                        console.log('onerror', arguments);
+                    };
+
+                    $scope.socket.onclose = function () {
+                        console.log('onclose', arguments);
+                    };
+                });
+            }
+
+            openChannel();
+        }
+    </script>
+</body>
+</html>
